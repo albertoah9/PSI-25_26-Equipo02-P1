@@ -37,6 +37,15 @@ class Book(models.Model):
         """ Devuelve el URL a una instancia particular de Book """
         return reverse('book-detail', args=[str(self.id)])
     
+    def display_genre(self):
+        """Create a string for the Genre. This is required to display genre in Admin."""
+        return ', '.join(genre.name for genre in self.genre.all()[:3])
+    
+    display_genre.short_description = "Genre"
+    
+    class Meta:
+        ordering = ["title"]
+
 import uuid # Requerida para las instancias de libros únicos
 
 class BookInstance(models.Model):
@@ -61,7 +70,7 @@ class BookInstance(models.Model):
     def __str__(self):
         """ String para representar el Objeto del Modelo """
         return '%s (%s)' % (self.id,self.book.title)
-    
+
 class Author(models.Model):
     """ Modelo que representa un autor """
     first_name = models.CharField(max_length=100)
@@ -73,10 +82,12 @@ class Author(models.Model):
         """ Retorna la url para acceder a una instancia particular de un autor. """
         return reverse('author-detail', args=[str(self.id)])
 
-
     def __str__(self):
         """ String para representar el Objeto Modelo """
         return '%s, %s' % (self.last_name, self.first_name)
+    
+    class Meta:
+        ordering = ['last_name']
     
 class Language(models.Model):
     name = models.CharField(max_length=200, help_text="Ingrese el idioma del libro")
