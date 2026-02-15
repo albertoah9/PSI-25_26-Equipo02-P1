@@ -33,10 +33,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-&psk#na5l=p3q8
 DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 ## For example, for a site URL at 'hamishwillee.pythonanywhere.com'
 ## (replace the string below with your own site URL):
-ALLOWED_HOSTS = ['hamishwillee.pythonanywhere.com', '127.0.0.1']
+ALLOWED_HOSTS = ['marcoshv.pythonanywhere.com', '127.0.0.1']
 ## For example, for a site URL is at 'web-production-3640.up.railway.app'
 ## (replace the string below with your own site URL):
-CSRF_TRUSTED_ORIGINS = ['https://hamishwillee.pythonanywhere.com']
+CSRF_TRUSTED_ORIGINS = ['https://marcoshv.pythonanywhere.com']
 
 # During development/for this tutorial you can instead set just the base URL
 # CSRF_TRUSTED_ORIGINS = ['https://*.pythonanywhere.com']
