@@ -1,21 +1,13 @@
-Name                                Stmts   Miss  Cover
--------------------------------------------------------
-catalog/__init__.py                     0      0   100%
-catalog/admin.py                       24      0   100%
-catalog/apps.py                         4      0   100%
-catalog/forms.py                       13      0   100%
-catalog/models.py                      52      2    96%
-catalog/tests/__init__.py               0      0   100%
-catalog/tests/test_first_week.py       69     22    68%
-catalog/tests/test_forms.py            27      0   100%
-catalog/tests/test_models.py           25      0   100%
-catalog/tests/test_second_week.py      87      7    92%
-catalog/tests/test_third_week.py      187      7    96%
-catalog/tests/test_views.py           208      0   100%
-catalog/urls.py                         8      0   100%
-catalog/views.py                      101     10    90%
-locallibrary/__init__.py                0      0   100%
-locallibrary/settings.py               37      2    95%
-locallibrary/urls.py                   11      0   100%
--------------------------------------------------------
-TOTAL                                 853     50    94%
+Name                       Stmts   Miss  Cover
+----------------------------------------------
+catalog/__init__.py            0      0   100%
+catalog/admin.py              24      0   100%
+catalog/apps.py                4      0   100%
+catalog/forms.py              13      0   100%
+catalog/models.py             52      2    96%
+catalog/urls.py                8      0   100%
+catalog/views.py             101     10    90%
+locallibrary/__init__.py       0      0   100%
+locallibrary/urls.py          11      0   100%
+----------------------------------------------
+TOTAL                        213     12    94%

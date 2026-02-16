@@ -101,13 +101,12 @@ POSTGRESQL_URL = os.environ.get(
     "postgresql://alumnodb:alumnodb@localhost:5432/psi",
 )
 
-NEON_URL = os.environ.get("NEON_URL")  # ponla en .env
-RENDER_DATABASE_URL = os.environ.get("DATABASE_URL")  # Render la define
+NEON_URL = os.environ.get("NEON_URL") 
+RENDER_DATABASE_URL = os.environ.get("DATABASE_URL")  
 
 if "TESTING" in os.environ:
     db_url = POSTGRESQL_URL
 else:
-    # prioridad: Render DATABASE_URL si existe, si no NEON_URL
     db_url = RENDER_DATABASE_URL or NEON_URL
 
 if not db_url:
