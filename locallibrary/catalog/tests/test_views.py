@@ -324,14 +324,14 @@ class AuthorCreateViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith('/accounts/login/'))
 
-    def test_forbidden_if_logged_in_without_permission(self):
+    def test_forbidden_if_logged_in_but_not_correct_permission(self):
         user = User.objects.create_user(username='no_perm', password='1234')
         self.client.login(username='no_perm', password='1234')
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
-    def test_logged_in_with_permission_returns_200(self):
+    def test_logged_in_with_permission(self):
         self.client.login(username='test_user', password='some_password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -341,7 +341,7 @@ class AuthorCreateViewTest(TestCase):
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, 'catalog/author_form.html')
 
-    def test_initial_date_of_death(self):
+    def test_form_date_of_death_initially_set_to_expected_date(self):
         self.client.login(username='test_user', password='some_password')
         response = self.client.get(self.url)
 
@@ -351,7 +351,7 @@ class AuthorCreateViewTest(TestCase):
             '11/11/2023'
         )
         
-    def test_redirects_on_success(self):
+    def test_redirects_to_detail_view_on_success(self):
         self.client.login(username='test_user', password='some_password')
 
         response = self.client.post(self.url, data={

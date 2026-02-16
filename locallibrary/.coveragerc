@@ -1,0 +1,5 @@
+[run]
+omit =
+    populate_catalog.py
+    */migrations/*
+    manage.py

@@ -23,8 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Support env variables from .env file if defined
 import os
 from dotenv import load_dotenv
-env_path = load_dotenv(os.path.join(BASE_DIR, '.env'))
-load_dotenv(env_path)
+load_dotenv(BASE_DIR / '.env')
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-yr*yon!#z*xc0c3pn4yf*dhw41tpe5lss0_whf!3)rnphyi-n^'
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'catalog.apps.CatalogConfig', # Nuestra nueva aplicación Catalog en catalog/apps.py
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -91,10 +92,32 @@ WSGI_APPLICATION = 'locallibrary.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Database
+# Use local PostgreSQL for tests/dev with TESTING=1
+# Use NEON (or Render DATABASE_URL) when TESTING is not set
+
+POSTGRESQL_URL = os.environ.get(
+    "POSTGRESQL_URL",
+    "postgresql://alumnodb:alumnodb@localhost:5432/psi",
+)
+
+NEON_URL = os.environ.get("NEON_URL")  # ponla en .env
+RENDER_DATABASE_URL = os.environ.get("DATABASE_URL")  # Render la define
+
+if "TESTING" in os.environ:
+    db_url = POSTGRESQL_URL
+else:
+    # prioridad: Render DATABASE_URL si existe, si no NEON_URL
+    db_url = RENDER_DATABASE_URL or NEON_URL
+
+if not db_url:
+    raise RuntimeError("Database URL not configured. Set NEON_URL (and/or DATABASE_URL on Render).")
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgres://alumnodb:alumnodb@localhost:5432/psi',
-        conn_max_age=500
+    "default": dj_database_url.parse(
+        db_url,
+        conn_max_age=500,
+        conn_health_checks=True,
     )
 }
 
@@ -146,13 +169,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Update database configuration from $DATABASE_URL environment variable (if defined)
-import dj_database_url
 
-if 'DATABASE_URL' in os.environ:
-    DATABASES['default'] = dj_database_url.config(
-        conn_max_age=500,
-        conn_health_checks=True,
-    )
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

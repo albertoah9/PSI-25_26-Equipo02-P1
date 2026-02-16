@@ -32,7 +32,7 @@ def index(request):
 
     num_visits = request.session.get('num_visits', 0)
     num_visits += 1
-    request.session['num_vists'] = num_visits
+    request.session['num_visits'] = num_visits
     # Renderiza la plantilla HTML index.html con los datos en la variable contexto
     return render(
         request,
@@ -53,6 +53,7 @@ class BookDetailView(generic.DetailView):
 
 class AuthorListView(generic.ListView):
     model = Author
+    paginate_by = 10
 
 class AuthorDetailView(generic.DetailView):
     model = Author
