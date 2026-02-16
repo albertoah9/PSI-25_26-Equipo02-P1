@@ -1,13 +1,13 @@
-Name                       Stmts   Miss  Cover
-----------------------------------------------
+Name                       Stmts   Miss  Cover   Missing
+--------------------------------------------------------
 catalog/__init__.py            0      0   100%
 catalog/admin.py              24      0   100%
 catalog/apps.py                4      0   100%
 catalog/forms.py              13      0   100%
-catalog/models.py             52      2    96%
+catalog/models.py             52      1    98%   80
 catalog/urls.py                8      0   100%
-catalog/views.py             101     10    90%
+catalog/views.py             101      1    99%   170
 locallibrary/__init__.py       0      0   100%
 locallibrary/urls.py          11      0   100%
-----------------------------------------------
-TOTAL                        213     12    94%
+--------------------------------------------------------
+TOTAL                        213      2    99%
