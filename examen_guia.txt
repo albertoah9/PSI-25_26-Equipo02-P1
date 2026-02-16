@@ -1,0 +1,994 @@
+==================================================
+GUÍA RÁPIDA PARA EXAMEN P1 PSI 
+==================================================
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  COMANDOS INICIALES (Ejercicios 1-2)                                     ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 1: Crear proyecto y aplicación
+# ─────────────────────────────────────────────────────────────────────────
+# django-admin: herramienta de Django para crear proyectos
+# startproject: crea la estructura base del proyecto
+# project: nombre del proyecto (puede ser cualquier nombre)
+django-admin startproject project
+
+# Entrar al directorio del proyecto recién creado
+cd project
+
+# python3 manage.py: script principal para gestionar el proyecto
+# startapp: crea una nueva aplicación dentro del proyecto
+# application: nombre de la app (debe coincidir con el enunciado)
+python3 manage.py startapp application
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 2: Instalar dependencias (si hay archivo requirements.txt) 
+# ─────────────────────────────────────────────────────────────────────────
+# pip: gestor de paquetes de Python
+# install -r: instala desde un archivo de requisitos
+# requirements.txt: archivo con lista de paquetes necesarios (debe estar en el directorio project)
+pip3 install -r requirements.txt
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 3: AÑADIR 'application' a INSTALLED_APPS (¡IMPORTANTÍSIMO!)
+# ─────────────────────────────────────────────────────────────────────────
+# ABRE EL ARCHIVO project/settings.py CON nano O EL EDITOR QUE TENGAS
+nano project/settings.py
+
+# BUSCA LA VARIABLE 'INSTALLED_APPS' (normalmente línea ~30-40)
+#    Aparece como una lista de strings entre corchetes []
+
+# AÑADE 'application' AL FINAL DE LA LISTA (con coma al final)
+#    Debe quedar así exactamente:
+"""
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'application',  # ← Nuestra app (la coma al final es obligatoria) ('catalog.apps.CatalogConfig',)
+]
+"""
+
+# EXPLICACIÓN: INSTALLED_APPS le dice a Django qué aplicaciones forman
+#    parte del proyecto. Si no añades aquí 'application', Django no podrá
+#    encontrar los modelos, vistas, etc. que crees en esa app.
+#    La coma después de 'application' es necesaria por sintaxis de Python.
+# CONSEJO: Si no sabes usar nano, usa el editor que te den en el examen
+#    Guarda con Ctrl+O, Enter y sal con Ctrl+X (en nano)
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 4: Configurar PostgreSQL en settings.py
+# ─────────────────────────────────────────────────────────────────────────
+# ABRE DE NUEVO project/settings.py Y BUSCA 'DATABASES'
+nano project/settings.py
+
+# REEMPLAZA LA CONFIGURACIÓN DE SQLite POR POSTGRESQL:
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',   # Motor PostgreSQL
+        'NAME': 'examen',                            # Nombre BD (dado)
+        'USER': 'alumnodb',                          # Usuario (dado)
+        'PASSWORD': 'alumnodb',                      # Contraseña (dada)
+        'HOST': 'localhost',                         # Servidor local
+        'PORT': '5432',                              # Puerto PostgreSQL
+    }
+}
+"""
+
+# EXPLICACIÓN: Django necesita saber qué base de datos usar.
+#    El enunciado EXIGE PostgreSQL con esos datos exactos.
+#    El puerto 5432 es el estándar de PostgreSQL.
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 5: Crear la base de datos en PostgreSQL (DESDE TERMINAL)
+# ─────────────────────────────────────────────────────────────────────────
+# dropdb: comando de PostgreSQL para borrar BD
+# -U alumnodb: usuario de la BD
+# -h localhost: servidor local
+# --if-exists: no da error si no existe (útil por si acaso)
+dropdb -U alumnodb -h localhost examen --if-exists
+
+# createdb: comando para crear nueva BD
+createdb -U alumnodb -h localhost examen
+
+# EXPLICACIÓN: Primero borramos por si quedaba una BD anterior
+#    (evita errores). Luego creamos la BD nueva y vacía.
+#    Si pide contraseña, es 'alumnodb'.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  MODELOS (Ejercicio 3)                                                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 6: Crear los modelos en application/models.py
+# ─────────────────────────────────────────────────────────────────────────
+nano application/models.py
+
+# BORRA TODO Y PEGA ESTO:
+"""
+from django.db import models
+from django.utils import timezone
+
+# Modelo Usuario: representa a los usuarios de la plataforma
+class Usuario(models.Model):
+    nombreUsuario = models.CharField(max_length=100)  # Campo texto
+    
+    def __str__(self):
+        # Método mágico para representación en admin
+        return self.nombreUsuario
+
+# Modelo Canal: representa los canales de streaming
+class Canal(models.Model):
+    nombreCanal = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.nombreCanal
+
+# Modelo Suscripcion: relación entre usuarios y canales
+class Suscripcion(models.Model):
+    # ForeignKey = clave foránea (relación muchos-a-uno)
+    canal = models.ForeignKey(Canal, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    # DateField = campo de fecha, default = hoy automático
+    fechaDeSuscripcion = models.DateField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.usuario} -> {self.canal}"
+"""
+
+# EXPLICACIÓN:
+#    - CharField: texto corto
+#    - ForeignKey: relación con otra tabla (on_delete=models.CASCADE =
+#      si se borra el canal/usuario, se borran sus suscripciones)
+#    - DateField: fecha (default=timezone.now = fecha actual automática)
+#    - __str__: cómo se ve en el admin
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 7: Registrar modelos en admin (para verlos en /admin)
+# ─────────────────────────────────────────────────────────────────────────
+nano application/admin.py
+
+# BORRA TODO Y PEGA ESTO:
+
+"""
+from django.contrib import admin
+from .models import Usuario, Canal, Suscripcion
+
+# Decorador @admin.register: registra el modelo en el admin
+@admin.register(Usuario)
+class UsuarioAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombreUsuario')  # Columnas a mostrar
+
+@admin.register(Canal)
+class CanalAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombreCanal')
+
+@admin.register(Suscripcion)
+class SuscripcionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'canal', 'usuario', 'fechaDeSuscripcion')
+"""
+
+# EXPLICACIÓN: list_display controla qué columnas se ven en la lista
+#    de objetos en el panel de administración.
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 8: Crear y aplicar migraciones
+# ─────────────────────────────────────────────────────────────────────────
+# makemigrations: crea archivos de migración (SQL automático)
+python3 manage.py makemigrations
+
+# migrate: ejecuta las migraciones en la BD
+python3 manage.py migrate
+
+# EXPLICACIÓN: Las migraciones traducen los modelos Python a tablas SQL
+#    Siempre hay que ejecutarlos después de crear/modificar modelos.
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 9: Crear superusuario (para acceder al admin)
+# ─────────────────────────────────────────────────────────────────────────
+python3 manage.py createsuperuser
+# Te pedirá:
+#   Username: alumnodb
+#   Email: (dejar vacío, pulsar Enter)
+#   Password: alumnodb
+#   Password (again): alumnodb
+#   (luego 'y' para confirmar contraseña débil)
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  SCRIPT POPULATE (Ejercicio 4-5)                                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 10: Crear populate_models.py en la raíz del proyecto
+# ─────────────────────────────────────────────────────────────────────────
+# NOTA: Este archivo debe estar AL MISMO NIVEL que manage.py
+nano populate_models.py
+
+# PEGA TODO ESTO (está explicado línea por línea):
+
+"""
+import os
+import django
+from datetime import datetime
+
+# Configurar Django: necesitamos decirle qué settings usar
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+# Inicializar Django (para poder usar modelos sin manage.py)
+django.setup()
+
+# Importar modelos DESPUÉS de django.setup()
+from application.models import Usuario, Canal, Suscripcion
+
+def populate():
+    # Limpiar datos existentes (por si acaso)
+    # El orden importa: primero las que tienen ForeignKeys
+    Suscripcion.objects.all().delete()
+    Usuario.objects.all().delete()
+    Canal.objects.all().delete()
+    
+    # Crear usuarios (con IDs específicos del enunciado)
+    u1 = Usuario(id=1001, nombreUsuario='antonio2985')
+    u2 = Usuario(id=1002, nombreUsuario='respetaCamiones124')
+    u3 = Usuario(id=1003, nombreUsuario='asierUR')
+    # bulk_create: inserta varios objetos de una vez (más rápido)
+    Usuario.objects.bulk_create([u1, u2, u3])
+    
+    # Crear canales
+    c1 = Canal(id=1001, nombreCanal='elokasTV')
+    c2 = Canal(id=1002, nombreCanal='ibai')
+    c3 = Canal(id=1003, nombreCanal='playz')
+    Canal.objects.bulk_create([c1, c2, c3])
+    
+    # Crear suscripciones (fechas en formato DD-MM-YYYY)
+    s1 = Suscripcion(
+        id=1001,
+        canal_id=1001,  # Usamos canal_id para asignar por ID existente
+        usuario_id=1001,
+        fechaDeSuscripcion=datetime.strptime('05-02-2024', '%d-%m-%Y').date()
+    )
+    s2 = Suscripcion(
+        id=1002,
+        canal_id=1001,
+        usuario_id=1002,
+        fechaDeSuscripcion=datetime.strptime('11-10-2023', '%d-%m-%Y').date()
+    )
+    s3 = Suscripcion(
+        id=1003,
+        canal_id=1003,
+        usuario_id=1003,
+        fechaDeSuscripcion=datetime.strptime('12-01-2025', '%d-%m-%Y').date()
+    )
+    Suscripcion.objects.bulk_create([s1, s2, s3])
+    
+    print(" Datos insertados correctamente")
+    print(f"   Usuarios: {Usuario.objects.count()}")
+    print(f"   Canales: {Canal.objects.count()}")
+    print(f"   Suscripciones: {Suscripcion.objects.count()}")
+
+if __name__ == '__main__':
+    populate()
+"""
+
+# EXPLICACIÓN CLAVE:
+#    - os.environ.setdefault: necesaria para que Django encuentre settings
+#    - django.setup(): imprescindible para usar modelos fuera de manage.py
+#    - datetime.strptime: convierte string '05-02-2024' a objeto fecha
+#    - canal_id vs canal: podemos asignar por ID directamente
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 11: Ejecutar el script
+# ─────────────────────────────────────────────────────────────────────────
+python3 populate_models.py
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  VISTA CANAL (Ejercicio 6)                                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 12: Crear la vista en application/views.py
+# ─────────────────────────────────────────────────────────────────────────
+nano application/views.py
+
+# BORRA TODO Y PEGA ESTO:
+
+"""
+from django.shortcuts import render
+from .models import Canal, Suscripcion
+
+def canal_detail(request, pk):
+    # Intentamos obtener el canal, si no existe capturamos excepción
+    try:
+        # get(pk=pk): busca canal por primary key
+        canal = Canal.objects.get(pk=pk)
+        # filter(canal=canal): todas suscripciones de ese canal
+        # select_related('usuario'): carga también el usuario (optimización)
+        suscripciones = Suscripcion.objects.filter(canal=canal).select_related('usuario')
+        # Contexto para la plantilla (datos que enviamos)
+        context = {
+            'nombreCanal': canal.nombreCanal,
+            'suscripciones': suscripciones,
+            'error': None
+        }
+    except Canal.DoesNotExist:
+        # Si el canal no existe, enviamos mensaje de error
+        context = {
+            'error': 'El canal solicitado no existe',
+            'nombreCanal': None,
+            'suscripciones': []
+        }
+    # Renderizar la plantilla canal.html con los datos del contexto
+    return render(request, 'canal.html', context)
+"""
+
+# EXPLICACIÓN:
+#    - pk: primary key, viene de la URL (<int:pk>)
+#    - try/except: manejo de error si no existe el canal
+#    - context: diccionario con variables para la plantilla
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 13: Crear la plantilla canal.html
+# ─────────────────────────────────────────────────────────────────────────
+# Crear directorio templates dentro de application
+mkdir -p application/templates
+nano application/templates/canal.html
+
+# PEGAR EL HTML DEL ANEXO EXACTAMENTE (sin modificar):
+
+"""
+<html>
+<head>
+</head>
+<body>
+{% if error %}
+{{ error }}
+{% else %}
+Suscripciones del canal {{ nombreCanal }}
+<table>
+{% for subs in suscripciones %}
+<tr>
+<th>{{ subs.usuario.id }} </th>
+<td>{{ subs.usuario.nombreUsuario }} </td>
+<td>{{ subs.fechaDeSuscripcion }} </td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+</body>
+</html>
+"""
+
+# EXPLICACIÓN: El enunciado dice "NO MODIFICAR", así que copiamos tal cual
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 14: Configurar URLs del proyecto (project/urls.py)
+# ─────────────────────────────────────────────────────────────────────────
+nano project/urls.py
+
+# MODIFICAR PARA QUE QUEDE ASÍ:
+
+"""
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),                       # Admin
+    path('application/', include('application.urls')),     # Nuestra app
+]
+"""
+
+# EXPLICACIÓN: include() redirige todas las URLs que empiecen
+#    por 'application/' al archivo de URLs de la app.
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 15: Crear el archivo de URLs de la aplicación
+# ─────────────────────────────────────────────────────────────────────────
+nano application/urls.py
+
+# CREAR ESTE ARCHIVO NUEVO:
+
+"""
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Ruta: application/canal/1/ , application/canal/2/ , etc.
+    path('canal/<int:pk>/', views.canal_detail, name='canal-detail'),
+]
+"""
+
+# EXPLICACIÓN: <int:pk> captura un número de la URL y lo pasa a la vista
+#    como parámetro 'pk'. Ej: /canal/1001/ → pk=1001
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 16: Probar que funciona
+# ─────────────────────────────────────────────────────────────────────────
+python3 manage.py runserver 8001
+
+# Abrir navegador:
+# - Admin: http://127.0.0.1:8001/admin/ (alumnodb/alumnodb)
+# - Canal detail: http://127.0.0.1:8001/application/canal/1001/
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  TESTS (Ejercicio 9)                                                    ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 17: Crear tests en application/tests.py
+# ─────────────────────────────────────────────────────────────────────────
+nano application/tests.py
+
+# BORRAR TODO Y PEGAR ESTO:
+
+"""
+from django.test import TestCase
+from django.urls import reverse
+from datetime import datetime
+from .models import Usuario, Canal, Suscripcion
+
+class StreamingTests(TestCase):
+    # TestCase crea una BD de pruebas temporal y la destruye al final
+    # No necesita setUp() porque TestCase ya limpia todo antes de cada test
+    
+    def test_streaming_scenario(self):
+        # 1. Borrar todo (TestCase lo hace automáticamente)
+        
+        # 2. Crear usuario jordi (id=1001)
+        u1 = Usuario.objects.create(id=1001, nombreUsuario='jordi')
+        
+        # 3. Crear usuario nacho (id=1002)
+        u2 = Usuario.objects.create(id=1002, nombreUsuario='nacho')
+        
+        # 4. Crear canal wildproject (id=1001)
+        c1 = Canal.objects.create(id=1001, nombreCanal='wildproject')
+        
+        # 5. Crear suscripción (1001, 1001, 1001, '08-03-2025')
+        s1 = Suscripcion.objects.create(
+            id=1001,
+            canal=c1,
+            usuario=u1,
+            fechaDeSuscripcion=datetime.strptime('08-03-2025', '%d-%m-%Y').date()
+        )
+        
+        # 6. Crear suscripción (1002, 1001, 1002, '07-01-2025')
+        s2 = Suscripcion.objects.create(
+            id=1002,
+            canal=c1,
+            usuario=u2,
+            fechaDeSuscripcion=datetime.strptime('07-01-2025', '%d-%m-%Y').date()
+        )
+        
+        # 7. Acceder a la vista con pk=1001
+        #    reverse() genera la URL a partir del nombre 'canal-detail'
+        response = self.client.get(reverse('canal-detail', args=[1001]))
+        
+        # 8. Comprobar que las suscripciones son correctas
+        self.assertEqual(response.status_code, 200)  # HTTP OK
+        self.assertContains(response, 'jordi')
+        self.assertContains(response, 'nacho')
+        self.assertContains(response, 'wildproject')
+        self.assertContains(response, '08-03-2025')
+        self.assertContains(response, '07-01-2025')
+        
+        # Verificar que no hay mensaje de error
+        self.assertNotContains(response, 'El canal solicitado no existe')
+"""
+
+# EXPLICACIÓN:
+#    - TestCase: clase base de Django para tests
+#    - self.client: cliente HTTP de pruebas (simula navegador)
+#    - assertContains: verifica que el texto está en la respuesta HTML
+#    - reverse: genera URL a partir del nombre en urls.py
+
+# ─────────────────────────────────────────────────────────────────────────
+# PASO 18: Ejecutar los tests
+# ─────────────────────────────────────────────────────────────────────────
+python3 manage.py test application.tests --verbosity 2
+
+# Si todo va bien, verás:
+#    Ran 1 test in X.XXXs
+#    OK
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  COMANDOS ÚTILES RÁPIDOS                                                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────
+# Verificar servidor (usar puerto 8001 como dice el enunciado)
+# ─────────────────────────────────────────────────────────────────────────
+python3 manage.py runserver 8001
+
+# ─────────────────────────────────────────────────────────────────────────
+# URLs importantes (una vez lanzado el servidor)
+# ─────────────────────────────────────────────────────────────────────────
+# Admin:          http://127.0.0.1:8001/admin/
+# Canal detail:   http://127.0.0.1:8001/application/canal/1001/
+# Tests:          python3 manage.py test application.tests
+
+# ─────────────────────────────────────────────────────────────────────────
+# Reset rápido de BD (si algo falla y quieres empezar de nuevo)
+# ─────────────────────────────────────────────────────────────────────────
+dropdb -U alumnodb -h localhost examen --if-exists
+createdb -U alumnodb -h localhost examen
+python3 manage.py migrate
+python3 manage.py createsuperuser  # alumnodb/alumnodb
+python3 populate_models.py
+
+# ─────────────────────────────────────────────────────────────────────────
+# Para generar el ZIP al final del examen
+# ─────────────────────────────────────────────────────────────────────────
+cd ..
+zip -r ../examen.zip . -x "*/__pycache__/*" "*.pyc"
+
+
+
+
+
+
+# ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+# Tutorial Django P1
+# ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 1: Introducción al Tutorial de la Biblioteca Local
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: Django, Tutorial, Biblioteca Local, Objetivos.
+
+Breve explicación: Presentación del proyecto "LocalLibrary", un sitio web para gestionar el catálogo de una biblioteca (libros, autores, copias, estados). Define qué se aprenderá: modelos, vistas, plantillas, URLs, admin, formularios, autenticación y despliegue.
+
+Código a añadir: No aplica (es solo teoría).
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 2: Creación del esqueleto del sitio web
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: django-admin, startproject, startapp, settings.py, urls.py, runserver.
+
+Breve explicación: Configuración inicial del entorno. Se crea el proyecto locallibrary, la aplicación catalog, se registra la app, se configura la base de datos (SQLite por defecto) y la zona horaria. Se preparan las URLs base.
+
+Código a añadir:
+
+Terminal (Crear proyecto y app):
+
+Bash
+django-admin startproject locallibrary .
+python3 manage.py startapp catalog
+locallibrary/settings.py (Registrar app):
+
+Python
+INSTALLED_APPS = [
+    # ... otras apps ...
+    'catalog.apps.CatalogConfig', 
+]
+TIME_ZONE = 'Europe/Madrid' # O tu zona horaria
+locallibrary/urls.py (Configurar URLs principales):
+
+Python
+from django.contrib import admin
+from django.urls import path, include
+from django.views.generic import RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('catalog/', include('catalog.urls')),
+    path('', RedirectView.as_view(url='/catalog/', permanent=True)),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+catalog/urls.py (Crear archivo vacío inicial):
+
+Python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+]
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 3: Uso de modelos
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: models.Model, CharField, ForeignKey, ManyToManyField, __str__, get_absolute_url.
+
+Breve explicación: Definición de la estructura de datos en models.py. Se crean los modelos Genre, Book, Author y BookInstance (copias físicas) con sus relaciones.
+
+Código a añadir en catalog/models.py:
+
+Python
+from django.db import models
+from django.urls import reverse
+import uuid
+
+class Genre(models.Model):
+    name = models.CharField(max_length=200, help_text="Ingrese el nombre del género (p. ej. Ciencia Ficción)")
+    def __str__(self):
+        return self.name
+
+class Book(models.Model):
+    title = models.CharField(max_length=200)
+    author = models.ForeignKey('Author', on_delete=models.SET_NULL, null=True)
+    summary = models.TextField(max_length=1000, help_text="Breve descripción del libro")
+    isbn = models.CharField('ISBN', max_length=13, help_text='13 Caracteres <a href="https://www.isbn-international.org/content/what-isbn">ISBN number</a>')
+    genre = models.ManyToManyField(Genre, help_text="Seleccione un género para este libro")
+    
+    def __str__(self):
+        return self.title
+    
+    def get_absolute_url(self):
+        return reverse('book-detail', args=[str(self.id)])
+    
+    def display_genre(self):
+        return ', '.join([genre.name for genre in self.genre.all()[:3]])
+    display_genre.short_description = 'Genre'
+
+class BookInstance(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text="ID único para este libro particular en toda la biblioteca")
+    book = models.ForeignKey('Book', on_delete=models.SET_NULL, null=True)
+    imprint = models.CharField(max_length=200)
+    due_back = models.DateField(null=True, blank=True)
+    
+    LOAN_STATUS = (
+        ('m', 'Maintenance'),
+        ('o', 'On loan'),
+        ('a', 'Available'),
+        ('r', 'Reserved'),
+    )
+    status = models.CharField(max_length=1, choices=LOAN_STATUS, blank=True, default='m', help_text='Disponibilidad del libro')
+
+    class Meta:
+        ordering = ['due_back']
+
+    def __str__(self):
+        return f'{self.id} ({self.book.title})'
+
+class Author(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    date_of_birth = models.DateField(null=True, blank=True)
+    date_of_death = models.DateField('Died', null=True, blank=True)
+
+    class Meta:
+        ordering = ['last_name', 'first_name']
+
+    def get_absolute_url(self):
+        return reverse('author-detail', args=[str(self.id)])
+
+    def __str__(self):
+        return f'{self.last_name}, {self.first_name}'
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 4: Sitio de administración de Django
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: admin.site.register, ModelAdmin, list_display, list_filter, fieldsets.
+
+Breve explicación: Registro de los modelos en el panel de administración para poder crear y editar datos. Se personaliza la visualización (filtros, columnas) usando clases ModelAdmin.
+
+Código a añadir en catalog/admin.py:
+
+Python
+from django.contrib import admin
+from .models import Author, Genre, Book, BookInstance
+
+admin.site.register(Genre)
+
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+    list_display = ('last_name', 'first_name', 'date_of_birth', 'date_of_death')
+    fields = ['first_name', 'last_name', ('date_of_birth', 'date_of_death')]
+
+@admin.register(Book)
+class BookAdmin(admin.ModelAdmin):
+    list_display = ('title', 'author', 'display_genre')
+
+@admin.register(BookInstance)
+class BookInstanceAdmin(admin.ModelAdmin):
+    list_filter = ('status', 'due_back')
+    fieldsets = (
+        (None, {'fields': ('book', 'imprint', 'id')}),
+        ('Availability', {'fields': ('status', 'due_back')}),
+    )
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 5: Creación de tu página de inicio
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: views.py, urls.py (path), Plantillas (templates), render.
+
+Breve explicación: Creación de la vista index que cuenta los objetos en la base de datos y renderiza la plantilla index.html.
+
+Código a añadir:
+
+catalog/urls.py:
+
+Python
+urlpatterns = [
+    path('', views.index, name='index'),
+]
+catalog/views.py:
+
+Python
+from django.shortcuts import render
+from .models import Book, Author, BookInstance, Genre
+
+def index(request):
+    num_books = Book.objects.all().count()
+    num_instances = BookInstance.objects.all().count()
+    num_instances_available = BookInstance.objects.filter(status__exact='a').count()
+    num_authors = Author.objects.count()
+    
+    context = {
+        'num_books': num_books,
+        'num_instances': num_instances,
+        'num_instances_available': num_instances_available,
+        'num_authors': num_authors,
+    }
+    return render(request, 'index.html', context=context)
+catalog/templates/base_generic.html (Plantilla base):
+(Este código define la estructura común HTML, sidebar, CSS, etc.)
+
+catalog/templates/index.html:
+
+HTML
+{% extends "base_generic.html" %}
+{% block content %}
+  <h1>Local Library Home</h1>
+  <p>Welcome to LocalLibrary.</p>
+  <ul>
+    <li><strong>Books:</strong> {{ num_books }}</li>
+    <li><strong>Copies:</strong> {{ num_instances }}</li>
+    <li><strong>Copies available:</strong> {{ num_instances_available }}</li>
+    <li><strong>Authors:</strong> {{ num_authors }}</li>
+  </ul>
+{% endblock %}
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 6: Listas genéricas y vistas de detalles
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: ListView, DetailView, Clases genéricas, paginación.
+
+Breve explicación: Uso de vistas basadas en clases (BookListView, BookDetailView) para listar libros y ver sus detalles sin escribir mucha lógica.
+
+Código a añadir:
+
+catalog/urls.py:
+
+Python
+urlpatterns += [
+    path('books/', views.BookListView.as_view(), name='books'),
+    path('book/<int:pk>', views.BookDetailView.as_view(), name='book-detail'),
+]
+catalog/views.py:
+
+Python
+from django.views import generic
+
+class BookListView(generic.ListView):
+    model = Book
+    paginate_by = 10
+
+class BookDetailView(generic.DetailView):
+    model = Book
+catalog/templates/catalog/book_list.html:
+
+HTML
+{% extends "base_generic.html" %}
+{% block content %}
+  <h1>Book List</h1>
+  {% if book_list %}
+  <ul>
+    {% for book in book_list %}
+      <li><a href="{{ book.get_absolute_url }}">{{ book.title }}</a> ({{book.author}})</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p>There are no books in the library.</p>
+  {% endif %}
+{% endblock %}
+catalog/templates/catalog/book_detail.html:
+(Muestra título, autor, resumen y lista las instancias book.bookinstance_set.all)
+
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 7: Framework de sesiones
+# ─────────────────────────────────────────────────────────────────────────Palabras clave: request.session, Cookies, Persistencia.
+
+Breve explicación: Uso de sesiones para contar cuántas veces ha visitado un usuario la página de inicio.
+
+Código a añadir:
+
+catalog/views.py (Modificar index):
+
+Python
+def index(request):
+    # ... (código previo de contadores) ...
+    num_visits = request.session.get('num_visits', 0)
+    request.session['num_visits'] = num_visits + 1
+    
+    context = {
+        # ... otros datos ...
+        'num_visits': num_visits,
+    }
+    return render(request, 'index.html', context=context)
+catalog/templates/index.html:
+
+HTML
+<p>You have visited this page {{ num_visits }} times.</p>
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 8: autenticación y permisos de usuario
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: LoginRequiredMixin, login_required, User, Permisos.
+
+Breve explicación: Se habilita el login/logout. Se añade funcionalidad para que los usuarios vean qué libros tienen prestados.
+
+Código a añadir:
+
+locallibrary/urls.py:
+
+Python
+urlpatterns += [
+    path('accounts/', include('django.contrib.auth.urls')),
+]
+catalog/models.py (Añadir a BookInstance):
+
+Python
+from django.contrib.auth.models import User
+# Dentro de la clase BookInstance:
+borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+@property
+def is_overdue(self):
+    if self.due_back and date.today() > self.due_back:
+        return True
+    return False
+catalog/views.py (Vista de libros prestados):
+
+Python
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class LoanedBooksByUserListView(LoginRequiredMixin, generic.ListView):
+    model = BookInstance
+    template_name = 'catalog/bookinstance_list_borrowed_user.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')
+catalog/urls.py:
+
+Python
+urlpatterns += [
+    path('mybooks/', views.LoanedBooksByUserListView.as_view(), name='my-borrowed'),
+]
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 9: Trabajo con formularios
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: Form, ModelForm, CreateView, UpdateView, DeleteView, Validación.
+
+Breve explicación: Creación de un formulario personalizado para renovar libros (solo bibliotecarios) y vistas genéricas para Crear/Editar/Borrar autores.
+
+Código a añadir:
+
+catalog/forms.py (Nuevo archivo):
+
+Python
+from django import forms
+from django.core.exceptions import ValidationError
+import datetime
+
+class RenewBookForm(forms.Form):
+    renewal_date = forms.DateField(help_text="Enter a date between now and 4 weeks (default 3).")
+
+    def clean_renewal_date(self):
+        data = self.cleaned_data['renewal_date']
+        if data < datetime.date.today():
+            raise ValidationError('Invalid date - renewal in past')
+        if data > datetime.date.today() + datetime.timedelta(weeks=4):
+            raise ValidationError('Invalid date - renewal more than 4 weeks ahead')
+        return data
+catalog/views.py (Vista de renovación y CRUD de autores):
+
+Python
+from django.contrib.auth.decorators import permission_required
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from .forms import RenewBookForm
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Author
+
+@permission_required('catalog.can_mark_returned')
+def renew_book_librarian(request, pk):
+    book_inst = get_object_or_404(BookInstance, pk=pk)
+    if request.method == 'POST':
+        form = RenewBookForm(request.POST)
+        if form.is_valid():
+            book_inst.due_back = form.cleaned_data['renewal_date']
+            book_inst.save()
+            return HttpResponseRedirect(reverse('all-borrowed'))
+    else:
+        proposed_renewal_date = datetime.date.today() + datetime.timedelta(weeks=3)
+        form = RenewBookForm(initial={'renewal_date': proposed_renewal_date})
+
+    return render(request, 'catalog/book_renew_librarian.html', {'form': form, 'bookinst': book_inst})
+
+class AuthorCreate(CreateView):
+    model = Author
+    fields = '__all__'
+
+class AuthorUpdate(UpdateView):
+    model = Author
+    fields = ['first_name', 'last_name', 'date_of_birth', 'date_of_death']
+
+class AuthorDelete(DeleteView):
+    model = Author
+    success_url = reverse_lazy('authors')
+catalog/urls.py:
+
+Python
+urlpatterns += [
+    path('book/<uuid:pk>/renew/', views.renew_book_librarian, name='renew-book-librarian'),
+    path('author/create/', views.AuthorCreate.as_view(), name='author-create'),
+    path('author/<int:pk>/update/', views.AuthorUpdate.as_view(), name='author-update'),
+    path('author/<int:pk>/delete/', views.AuthorDelete.as_view(), name='author-delete'),
+]
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 10: Tests de un sitio web
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: TestCase, Client, assert, Pruebas unitarias.
+
+Breve explicación: Automatización de pruebas para asegurar que modelos, vistas y formularios funcionen correctamente tras los cambios.
+
+Código a añadir en catalog/tests.py:
+
+Python
+from django.test import TestCase
+from catalog.models import Author
+
+class AuthorModelTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        Author.objects.create(first_name='Big', last_name='Bob')
+
+    def test_first_name_label(self):
+        author = Author.objects.get(id=1)
+        field_label = author._meta.get_field('first_name').verbose_name
+        self.assertEquals(field_label, 'first name')
+
+    def test_get_absolute_url(self):
+        author = Author.objects.get(id=1)
+        self.assertEquals(author.get_absolute_url(), '/catalog/author/1')
+        
+# ─────────────────────────────────────────────────────────────────────────
+# Parte 11: esplegando Django a producción
+# ─────────────────────────────────────────────────────────────────────────
+Palabras clave: Producción, Variables de entorno, SECRET_KEY, DEBUG, WhiteNoise, Heroku.
+
+Breve explicación: Preparación del sitio para ser público. Se asegura la configuración (DEBUG=False), se gestionan archivos estáticos con WhiteNoise y se configuran archivos para despliegue (ej. en Heroku).
+
+Código a añadir/modificar:
+
+locallibrary/settings.py (Seguridad y estáticos):
+
+Python
+import os
+
+# Clave secreta desde variable de entorno
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'cg#p$g+j9tax!#a3cup@1$8obt2_+&k3q+pmu)5%asj6yjpkag')
+
+# Debug desactivado en producción
+DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
+
+ALLOWED_HOSTS = ['*'] # O el dominio específico de tu host
+
+# Middleware para archivos estáticos
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Añadir esto
+    # ...
+]
+
+# Almacenamiento estático
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+Procfile (Para Heroku):
+
+Plaintext
+web: gunicorn locallibrary.wsgi --log-file -
