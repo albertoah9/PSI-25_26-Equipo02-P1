@@ -8,25 +8,35 @@ admin.site.register(Genre)
 # admin.site.register(BookInstance)
 admin.site.register(Language)
 
+
 # Clase BookInline para meter Book dentro de Author
-class BookInline(admin.TabularInline):
+class BooksInline(admin.TabularInline):
     model = Book
     extra = 0
 
+
 # Define the admin class
 class AuthorAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'date_of_birth', 'date_of_death') # como se muestra
-    
-    fields = ['first_name', 'last_name', ('date_of_birth', 'date_of_death')] # cuando se rellenan los campos
-    
-    inlines = [BookInline]
+    # Cuando se muestran
+    list_display = ('last_name', 'first_name', 'date_of_birth',
+                    'date_of_death')
 
-admin.site.register(Author, AuthorAdmin) # Register the admin class with the associated model
+    # Cuando se modifican o crean
+    fields = ['first_name', 'last_name',
+              ('date_of_birth', 'date_of_death')]
+
+    inlines = [BooksInline]
+
+
+# Register the admin class with the associated model
+admin.site.register(Author, AuthorAdmin)
+
 
 # Clase BookInstanceInline para meter Book Instance dentro de Book
 class BooksInstanceInline(admin.TabularInline):
     model = BookInstance
     extra = 0
+
 
 # Register the Admin classes for Book using the decorator
 @admin.register(Book)
@@ -35,20 +45,19 @@ class BookAdmin(admin.ModelAdmin):
 
     inlines = [BooksInstanceInline]
 
+
 # Register the Admin classes for BookInstance using the decorator
 @admin.register(BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
-    list_display = ('book', 'status', 'due_back', 'id')
-    
-    list_filter = ('status', 'due_back', 'book')
-    
+    list_display = ('book', 'status',
+                    'borrower', 'due_back', 'id')
+    list_filter = ('status', 'due_back')
+
     fieldsets = (
         (None, {
             'fields': ('book', 'imprint', 'id')
-        }), 
+        }),
         ('Availability', {
-            'fields': ('status', 'due_back')
+            'fields': ('status', 'due_back', 'borrower')
         }),
     )
-
-

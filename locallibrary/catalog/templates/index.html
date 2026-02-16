@@ -17,7 +17,10 @@
     <li><strong>Copies:</strong> {{ num_instances }}</li>
     <li><strong>Copies available:</strong> {{ num_instances_available }}</li>
     <li><strong>Authors:</strong> {{ num_authors }}</li>
-    <li><strong>Books with 'a':</strong> {{ num_books_contain }}</li>
-    <li><strong>Genres with 'a':</strong> {{ num_genres_contain }}</li>
+    <li><strong>Books containing the letter 'a' in the title:</strong> {{ num_books_contain }}</li>
+    <li><strong>Genres: (with 'a'):</strong> {{ num_genres_contain }}</li>
   </ul>
+  <p>
+    You have visited this page {{ num_visits }} time{{ num_visits|pluralize }}.
+  </p>
 {% endblock %}

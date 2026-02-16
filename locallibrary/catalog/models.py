@@ -1,4 +1,9 @@
 from django.db import models
+from django.conf import settings
+from django.urls import reverse # Used to generate URLs by reversing the URL patterns
+import uuid # Requerida para las instancias de libros únicos
+from datetime import date
+
 
 class Genre(models.Model):
     """ Modelo que representa un género literario (p. ej. ciencia ficción, poesía, etc.). """
@@ -7,8 +12,6 @@ class Genre(models.Model):
     def __str__(self):
         """ Cadena que representa a la instancia particular del modelo (p. ej. en el sitio de Administración) """
         return self.name
-
-from django.urls import reverse # Used to generate URLs by reversing the URL patterns
 
 class Book(models.Model):
     """ Modelo que representa un libro (pero no un Ejemplar específico). """
@@ -46,8 +49,6 @@ class Book(models.Model):
     class Meta:
         ordering = ["title"]
 
-import uuid # Requerida para las instancias de libros únicos
-
 class BookInstance(models.Model):
     """ Modelo que representa una copia específica de un libro (i.e. que puede ser prestado por la biblioteca). """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text="ID único para este libro particular en toda la biblioteca")
@@ -64,12 +65,20 @@ class BookInstance(models.Model):
 
     status = models.CharField(max_length=1, choices=LOAN_STATUS, blank=True, default='m', help_text='Disponibilidad del libro')
 
+    borrower = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+
     class Meta:
         ordering = ["due_back"]
+        permissions = (("can_mark_returned", "Set book as returned"), )
 
     def __str__(self):
         """ String para representar el Objeto del Modelo """
         return '%s (%s)' % (self.id,self.book.title)
+
+    @property
+    def is_overdue(self):
+        """Determines if the book is overdue based on due date and current date."""
+        return bool(self.due_back and date.today() > self.due_back)
 
 class Author(models.Model):
     """ Modelo que representa un autor """
