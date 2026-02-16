@@ -27,7 +27,10 @@
               {% if user.is_authenticated %}
                 <li>User: {{ user.get_username }}</li>
                 <li><a href="{% url 'my-borrowed' %}">My Borrowed</a></li>
-                <li><button type="button" class="btn btn-link" onclick="location.href='{% url 'logout' %}'">Logout </button></li>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <li><button type="submit" class="btn btn-link">Logout </button></li>
+                </form>
               {% else %}
                 <li><button type="button" class="btn btn-link" onclick="location.href='{% url 'login' %}?next={{ request.path }}'">Login </button></li>
               {% endif %}
